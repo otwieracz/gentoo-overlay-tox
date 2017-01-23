@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit eutils fdo-mime git-r3 gnome2-utils toolchain-funcs
+inherit cmake-utils eutils fdo-mime git-r3 gnome2-utils toolchain-funcs
 
 DESCRIPTION="Lightweight Tox client"
 HOMEPAGE="http://utox.org"
@@ -14,6 +14,11 @@ EGIT_REPO_URI="git://github.com/GrayHatter/uTox.git
 LICENSE="GPL-3"
 SLOT="0"
 IUSE="+dbus +filter_audio"
+
+DEPEND="
+	${RDEPEND}
+	dev-util/cmake
+	>=sys-devel/gcc-4.9.0"
 
 RDEPEND="net-libs/tox[av]
 	media-libs/freetype
@@ -27,38 +32,21 @@ RDEPEND="net-libs/tox[av]
 DEPEND="${RDEPEND}
 	virtual/pkgconfig"
 
+CMAKE_USE_DIR="${S}"
+
 src_prepare() {
-	epatch_user
+	cmake-utils_src_prepare
 }
 
 src_configure() {
-	# respect CFLAGS
-	sed -i \
-		-e '/CFLAGS/s# -g ##' \
-		Makefile || die
+	cmake-utils_src_configure
 }
 
 src_compile() {
-	emake \
-		CC="$(tc-getCC)" \
-		DBUS=$(usex dbus "1" "0") \
-		FILTER_AUDIO=$(usex filter_audio "1" "0")
+	cmake-utils_src_compile
 }
 
 src_install() {
-	emake DESTDIR="${D}" PREFIX="/usr" install
+	cmake-utils_src_install
 }
 
-pkg_preinst() {
-	gnome2_icon_savelist
-}
-
-pkg_postinst() {
-	fdo-mime_desktop_database_update
-	gnome2_icon_cache_update
-}
-
-pkg_postrm() {
-	fdo-mime_desktop_database_update
-	gnome2_icon_cache_update
-}
